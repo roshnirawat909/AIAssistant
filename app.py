@@ -6,10 +6,24 @@ import uuid
 import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
+from streamlit.errors import StreamlitSecretNotFoundError
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+try:
+    api_key = st.secrets.get("GROQ_API_KEY")
+except StreamlitSecretNotFoundError:
+    api_key = None
+
+api_key = api_key or os.getenv("GROQ_API_KEY")
+if not api_key:
+    st.error(
+        "Groq API key is missing. Add GROQ_API_KEY to Streamlit Cloud Secrets "
+        "or create a local .env file."
+    )
+    st.stop()
+
+client = Groq(api_key=api_key)
 model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 database_path = os.path.join(os.path.dirname(__file__), "assistant.db")
 
